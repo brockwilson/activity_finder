@@ -1,5 +1,8 @@
 /venv
 
+*.pyc
+activity_finder.db
+
 *.sql
 *.sqlite
 
