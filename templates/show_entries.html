@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block body %}
+  {% if session.logged_in %}
+    <form action="{{ url_for('add_entry') }}" method=post
+          class=add-entry>
+      <dl>
+        <dt>Title:
+        <dd><input type=text size=30 name=title>
+        <dt>Description:
+        <dd><textarea name=description rows=5 cols=40></textarea>
+        <dt>Address:
+        <dd><textarea name=address rows=5 cols=40></textarea>
+        <dt>Minimum age:
+        <dd><input type=text size=10 name=min_age>
+        <dt>Maximum age:
+        <dd><input type=text size=10 name=max_age>
+        <dt>Schedule:
+        <dd><textarea name=schedule rows=5 cols=40></textarea>
+        <dt>Fee:
+        <dd><input type=text size=10 name=fee>
+        <dd><input type=submit value="Add Entry">
+      </dl>
+    </form>
+  {% endif %}
+  <ul class=entries>
+    {% for entry in entries %}
+      <li><h2>{{ entry.title }}</h2>{{ entry.description|safe }}
+    {% else %}
+        <li><em>Unbelievable.  No entries.</em>
+    {% endfor %}
+  </ul>
+{% endblock %}
+    

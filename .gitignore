@@ -1,0 +1,8 @@
+/venv
+
+*.sql
+*.sqlite
+
+.DS_STORE
+.DS_STORE?
+Thumbs.db
