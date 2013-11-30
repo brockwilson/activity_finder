@@ -2,6 +2,8 @@ import sqlite3
 from flask import Flask, request, session, g, redirect, url_for, \
     abort, render_template, flash
 from contextlib import closing
+from geopy.geocoders import GoogleV3
+import re
 
 # configuration
 DATABASE = './activity_finder.db'
@@ -22,6 +24,22 @@ def init_db():
         with app.open_resource('schema.sql', mode='r') as f:
             db.cursor().executescript(f.read())
         db.commit()
+
+def address_validator(address):
+    address = re.sub("b.c.", "bc", address.lower())
+    geolocator = GoogleV3()
+    try:
+        geocoded_address, (latitude, longitude) = geolocator.geocode(address)
+        if latitude:
+            # 1 - downcase both address and geocoded_address
+            geocoded_address = geocoded_address.lower()
+            # 2 - compare the first three entries of address and geocoded_address once they have been split by ","
+            for x, y in zip(address.split(",")[0:2], geocoded_address.split(",")[0:2]):
+                if x != y:
+                    return False
+            return geocoded_address, (latitude, longitude)                
+    except:
+        return False
 
 @app.before_request
 def before_request():
