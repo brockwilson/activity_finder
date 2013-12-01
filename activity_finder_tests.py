@@ -25,10 +25,12 @@ class ActivityFinderTestCase(unittest.TestCase):
         return self.app.get('/logout', follow_redirects=True)
 
     def test_empty_db(self):
+        print "\n\nTesting empty database\n"
         rv = self.app.get('/')
         assert 'No entries.' in rv.data
 
     def test_login_logout(self):
+        print "\n\nTesting login and logout\n"
         rv = self.login('admin', 'default')
         assert 'You were logged in' in rv.data
         rv = self.logout()
@@ -38,26 +40,31 @@ class ActivityFinderTestCase(unittest.TestCase):
         rv = self.login('admin', 'defaultx')
         assert 'Invalid password' in rv.data
 
+    def test_address_validator(self):
+        print "\n\nTesting address validator\n"
+        address = "738 East Pender Street, Vancouver, B.C., Canada"
+        self.assertTrue(af.address_validator(address))
+        wrong_address = "738 North Pender Street, Vancouver, B.C., Canada"
+        with  self.assertRaises(Exception):
+            list(af.address_validator(wrong_address))
+
     def test_entries(self):
+        print "\n\nTesting adding entries\n"
         self.login('admin', 'default')
-        rv = self.app.post('/add', data=dict(
-                title='<Hello>',
-                description='<strong>HTML</strong> allowed here',
-                address='blah blah blah',
-                min_age='0',
-                max_age='10',
-                schedule='more blahs',
-                fee='0'),
+        rv = self.app.post('/add',
+                           data=dict(title='<Hello>',
+                                     description='<strong>HTML</strong> allowed here',
+                                     address='560 Hawks Avenue, Vancouver, B.C.',
+                                     min_age='0',
+                                     max_age='10',
+                                     schedule='blah blah',
+                                     fee='0'),
                            follow_redirects=True)
         assert 'No entries' not in rv.data
         assert '&lt;Hello&gt;' in rv.data
         assert '<strong>HTML</strong> allowed here' in rv.data
 
-    def test_address_validator(self):
-        address = "738 East Pender Street, Vancouver, B.C., Canada"
-        self.assertTrue(af.address_validator(address))
-        wrong_address = "738 North Pender Street, Vancouver, B.C., Canada"
-        self.assertFalse(af.address_validator(wrong_address))
+
 
 if __name__ == '__main__':
     unittest.main()

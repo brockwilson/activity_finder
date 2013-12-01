@@ -28,18 +28,12 @@ def init_db():
 def address_validator(address):
     address = re.sub("b.c.", "bc", address.lower())
     geolocator = GoogleV3()
-    try:
-        geocoded_address, (latitude, longitude) = geolocator.geocode(address)
-        if latitude:
-            # 1 - downcase both address and geocoded_address
-            geocoded_address = geocoded_address.lower()
-            # 2 - compare the first three entries of address and geocoded_address once they have been split by ","
-            for x, y in zip(address.split(",")[0:2], geocoded_address.split(",")[0:2]):
-                if x != y:
-                    return False
-            return geocoded_address, (latitude, longitude)                
-    except:
-        return False
+    geocoded_address, (latitude, longitude) = geolocator.geocode(address)
+    geocoded_address = geocoded_address.lower()
+    for x, y in zip(address.split(",")[0:2], geocoded_address.split(",")[0:2]):
+        if x != y:
+            raise NameError("Addresses don't match")
+    return [latitude, longitude]
 
 @app.before_request
 def before_request():
@@ -57,14 +51,31 @@ def show_entries():
     entries = [dict(title=row[0], description=row[1]) for row in cur.fetchall()]
     return render_template('show_entries.html', entries=entries)
 
+
+
+
+# add validation 
 @app.route('/add', methods=['POST'])
 def add_entry():
     if not session.get('logged_in'):
         abort(401)
-    g.db.execute('insert into entries (title, description, address, min_age, max_age, schedule, fee) values (?, ?, ?, ?, ?, ?, ?)', [request.form['title'], request.form['description'], request.form['address'], request.form['min_age'], request.form['max_age'], request.form['schedule'], request.form['fee']])
-    g.db.commit()
-    flash('New entry was successfully posted')
-    return redirect(url_for('show_entries'))
+    form_input_fields = ('title', 'description', 'address', 'min_age', 'max_age', 'schedule', 'fee')
+    form_input_data = []
+    for form_input_field in form_input_fields:
+        form_input_data.append(request.form[form_input_field])
+    try:
+        lat_long = address_validator(form_input_data[2])
+        g.db.execute('insert into entries (title, description, address, min_age, max_age, schedule, fee, lat, long) values (?, ?, ?, ?, ?, ?, ?, ?, ?)', form_input_data+lat_long)
+        g.db.commit()
+        flash('New entry was successfully posted')
+        return redirect(url_for('show_entries'))
+    except:
+        flash('Invalid address entered.')
+        return redirect(url_for('show_entries'))
+
+
+
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
